@@ -198,7 +198,16 @@ button {
 		background-position: 0% 50%
 	}
 }
-
+ #panel {
+      width: 550px;
+      margin: 12px 0 30px;
+      padding: 15px 20px;
+      background: var(--panel);
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; align-items: center;
+      transition: background-color 1.5s;
+    }
 .gren-text {
 	background-image: linear-gradient(90deg, #0bb80b, #00ff11, #cdffd4, #09ff00, #1fb80b);
 	background-size: 300% 100%;
