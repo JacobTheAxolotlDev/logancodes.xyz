@@ -229,3 +229,53 @@ button {
 		background-position: 0% 50%
 	}
 }
+.main-panel {
+  width: 570px;
+  height: 400px;
+  display: flex;
+  background: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.left-side {
+  width: 50%;
+  padding: 20px;
+  color: white;
+  overflow-y: auto;
+}
+
+.right-side {
+  width: 50%;
+  overflow-y: auto;
+  background: #181818;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.card {
+  position: relative;
+  height: 120px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.03);
+}
+
+.card-text {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+  color: white;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  font-weight: bold;
+}
