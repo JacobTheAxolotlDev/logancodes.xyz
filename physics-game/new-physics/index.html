@@ -1,0 +1,314 @@
+ <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Physics game</title>
+  <link rel="icon" type="image/x-icon" href="../favicon.png">
+  <!-- Comic Neue -->
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@500;700&display=swap" rel="stylesheet"/>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://loganstoolsforschool.w3spaces.com/styles.css">
+  <script>
+    // Wait for the page to load
+window.onload = function() {
+  // Keep the loading screen visible for 3 seconds (3000 milliseconds)
+  setTimeout(function() {
+    // Hide the loading screen
+    document.getElementById('loading-screen').style.display = 'none';
+    
+    // Show the main content
+    document.getElementById('main-content').style.display = 'block';
+  }, 300);  // Change 3000 to your desired delay in milliseconds
+};
+</script>
+  </head>
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <img src="https://loganstoolsforschool.w3spaces.com/images/3dgifmaker77391.gif" alt="Loading..." id="loading-image"> <br>
+    <h1> Loading...</h1>
+  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=10.0">
+    <title>2D Physics Simulation</title>
+    <style>
+        body {
+    margin: 0;
+    background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+    font-family: 'Comic Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+}
+
+.controls {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+button {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    background: #4e8cff;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #6aa4ff;
+    transform: translateY(-2px);
+}
+
+input[type="range"] {
+    accent-color: #4e8cff;
+}
+
+select, input[type="color"] {
+    border-radius: 6px;
+    border: none;
+    padding: 5px;
+}
+
+canvas {
+    border-radius: 15px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="reset">Reset</button>
+        <label for="colorPicker">Choose Color:</label>
+        <input type="color" id="colorPicker" value="#3498db">
+        <label for="shapeSelect">Select Shape:</label>
+        <select id="shapeSelect">
+            <option value="circle">Circle</option>
+            <option value="box">Box</option>
+            <option value="bomb">Bomb</option>
+        </select>
+        <label for="heightSlider">Height:</label>
+        <input type="range" id="heightSlider" min="10" max="200" value="50">
+        <label for="lengthSlider">Length:</label>
+        <input type="range" id="lengthSlider" min="10" max="200" value="50">
+        <button id="drawToggle">Toggle Draw Mode</button>
+    </div>
+    <canvas id="simulationCanvas"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+    <script>
+        const { Engine, Render, World, Bodies, Body, Mouse, MouseConstraint, Constraint, Vector } = Matter;
+
+        const engine = Engine.create();
+        const canvas = document.getElementById("simulationCanvas");
+        const render = Render.create({
+            element: document.body,
+            engine: engine,
+            canvas: canvas,
+            options: {
+                width: 800,
+                height: 600,
+                wireframes: false,
+            }
+        });
+
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: { visible: false }
+            }
+        });
+        World.add(engine.world, mouseConstraint);
+
+        canvas.width = 800;
+        canvas.height = 600;
+
+        const ground = Bodies.rectangle(400, 590, 810, 60, { isStatic: true });
+        World.add(engine.world, ground);
+
+        const resetButton = document.getElementById("reset");
+        const colorPicker = document.getElementById("colorPicker");
+        const shapeSelect = document.getElementById("shapeSelect");
+        const heightSlider = document.getElementById("heightSlider");
+        const lengthSlider = document.getElementById("lengthSlider");
+        const drawToggle = document.getElementById("drawToggle");
+
+        let drawMode = false;
+        let color = colorPicker.value;
+
+        resetButton.addEventListener("click", resetSimulation);
+        colorPicker.addEventListener("input", (event) => {
+            color = event.target.value;
+        });
+
+        shapeSelect.addEventListener("change", () => {
+            heightSlider.value = shapeSelect.value === "circle" ? 50 : 100;
+            lengthSlider.value = shapeSelect.value === "box" ? 50 : 100;
+        });
+
+        canvas.addEventListener("click", (event) => {
+            const shape = shapeSelect.value;
+            const x = event.clientX - canvas.offsetLeft;
+            const y = event.clientY - canvas.offsetTop;
+
+            if (shape === "bomb") {
+                const bomb = Bodies.circle(x, y, 20, { render: { fillStyle: "red" } });
+                World.add(engine.world, bomb);
+                setTimeout(() => explodeBomb(bomb), 3000);
+            } else {
+                if (drawMode) {
+                    if (shape === "circle") {
+                        const circle = Bodies.circle(x, y, heightSlider.value / 2, { isStatic: false, render: { fillStyle: color } });
+                        World.add(engine.world, circle);
+                    } else if (shape === "box") {
+                        createBox(x, y);
+                    }
+                } else {
+                    if (shape === "circle") {
+                        const circle = Bodies.circle(x, y, heightSlider.value / 2, { render: { fillStyle: color } });
+                        World.add(engine.world, circle);
+                    } else if (shape === "box") {
+                        createBox(x, y);
+                    }
+                }
+            }
+        });
+
+        drawToggle.addEventListener("click", () => {
+            drawMode = !drawMode;
+            drawToggle.textContent = drawMode ? "Drawing Mode: ON" : "Toggle Draw Mode";
+        });
+
+        function createBox(x, y) {
+    const width = parseInt(lengthSlider.value);
+    const height = parseInt(heightSlider.value);
+    const thickness = 12;
+
+    const boxParts = [];
+
+    const options = {
+        density: 0.002,
+        friction: 0.6,
+        restitution: 0.1,
+        render: { fillStyle: color }
+    };
+
+    const top = Bodies.rectangle(x, y - height / 2, width, thickness, options);
+    const bottom = Bodies.rectangle(x, y + height / 2, width, thickness, options);
+    const left = Bodies.rectangle(x - width / 2, y, thickness, height, options);
+    const right = Bodies.rectangle(x + width / 2, y, thickness, height, options);
+
+    boxParts.push(top, bottom, left, right);
+
+    const boxComposite = Matter.Composite.create();
+    Matter.Composite.add(boxComposite, boxParts);
+
+    const stiffness = 0.6; // lower so it flexes first
+
+    const constraints = [
+        Constraint.create({ bodyA: top, bodyB: left, stiffness }),
+        Constraint.create({ bodyA: top, bodyB: right, stiffness }),
+        Constraint.create({ bodyA: bottom, bodyB: left, stiffness }),
+        Constraint.create({ bodyA: bottom, bodyB: right, stiffness })
+    ];
+
+    Matter.Composite.add(boxComposite, constraints);
+    World.add(engine.world, boxComposite);
+
+    // break detection
+    Matter.Events.on(engine, "afterUpdate", function () {
+        constraints.forEach((constraint) => {
+            if (!constraint.bodyA || !constraint.bodyB) return;
+
+            const pointAWorld = Vector.add(constraint.bodyA.position, constraint.pointA || {x:0,y:0});
+            const pointBWorld = Vector.add(constraint.bodyB.position, constraint.pointB || {x:0,y:0});
+            const currentLength = Vector.magnitude(Vector.sub(pointAWorld, pointBWorld));
+
+            if (currentLength > 60) { // stretch limit
+                World.remove(engine.world, constraint);
+            }
+        });
+    });
+}
+function checkForBreakConstraints(constraints) {
+    const forceThreshold = 1000.0; // Higher threshold to avoid premature breaking
+
+    constraints.forEach((constraint) => {
+        const bodyA = constraint.bodyA;
+        const bodyB = constraint.bodyB;
+
+        // Calculate the relative velocity between the two bodies
+        const velocityA = bodyA.velocity;
+        const velocityB = bodyB.velocity;
+
+        // Calculate the difference in velocities
+        const velocityDifference = Vector.sub(velocityB, velocityA);
+        const forceMagnitude = Vector.magnitude(velocityDifference);
+
+        // If the force (velocity difference) exceeds the threshold, break the constraint
+        if (forceMagnitude > forceThreshold) {
+            // Apply a small force to separate the two bodies slightly
+            const separationForce = Vector.mult(Vector.normalise(velocityDifference), 10);
+            Body.applyForce(bodyA, bodyA.position, separationForce);
+            Body.applyForce(bodyB, bodyB.position, Vector.neg(separationForce));
+
+            World.remove(engine.world, constraint); // Remove constraint when force is too high
+
+            // Optionally apply damping to the bodies to prevent them from bouncing off each other too much
+            Body.set(bodyA, 'frictionAir', 0.05); // Adjust air friction (damping)
+            Body.set(bodyB, 'frictionAir', 0.05);
+        }
+    });
+}
+
+
+
+        function explodeBomb(bomb) {
+    const bombPosition = bomb.position;
+    World.remove(engine.world, bomb);
+
+    const bodies = Matter.Composite.allBodies(engine.world);
+
+    bodies.forEach((body) => {
+        if (!body.isStatic) {
+            const distanceVector = Vector.sub(body.position, bombPosition);
+            const distance = Vector.magnitude(distanceVector);
+
+            if (distance < 250) {
+                const forceStrength = (1 - (distance / 250)) * 0.05;
+                const force = Vector.mult(Vector.normalise(distanceVector), forceStrength);
+                Body.applyForce(body, body.position, force);
+            }
+        }
+    });
+}
+
+        function resetSimulation() {
+            World.clear(engine.world);
+            Engine.clear(engine);
+            render.canvas.width = render.canvas.width;
+            World.add(engine.world, mouseConstraint);
+            World.add(engine.world, ground);
+        }
+
+        Engine.run(engine);
+        Render.run(render);
+    </script>
+</body>
+</html>
